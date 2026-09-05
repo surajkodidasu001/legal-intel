@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.cache/
+data/raw/
+data/processed/
+artifacts/
+.venv/
+.pytest_cache/
+README_RESULTS.md

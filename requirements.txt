@@ -1,0 +1,17 @@
+# pinned loosely here; lock with pip-compile / uv before you publish
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.4
+scipy>=1.12
+datasets>=2.18            # LexGLUE loading
+datasketch>=1.6           # MinHash / LSH for near-dup clustering
+bm25s>=0.2                # real BM25 (not ts_rank)
+PyStemmer>=2.2            # optional, for the stemming ablation
+spacy>=3.7                # track C
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+psycopg[binary]>=3.1
+pgvector>=0.2
+pyyaml>=6.0
+pytest>=8.0

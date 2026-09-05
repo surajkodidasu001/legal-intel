@@ -1,0 +1,39 @@
+# Milestone 1: smallest end-to-end system. 5K docs, one classifier family,
+# one retrieval method, real evaluation, API, Docker.
+# Do not add anything to this file until the whole path runs.
+
+experiment: milestone1
+seed: 20260905
+
+data:
+  dataset: ledgar          # LexGLUE/LEDGAR via HuggingFace: coastalcph/lex_glue
+  n_docs: 5000
+  text_col: text
+  label_col: label
+  cache_dir: .cache/data
+
+dedup:
+  threshold: 0.8
+  num_perm: 128
+  shingle_k: 5
+
+split:
+  mode: random             # flip to "temporal" for the drift experiment
+  fractions: [0.70, 0.10, 0.10, 0.10]   # train / dev / calib / test
+  group_col: dup_cluster
+
+classify:
+  models: [logreg, naive_bayes, linear_svm]
+  tuning_budget: 12        # identical per model -- enforced in code
+  eval_split: dev          # test stays closed until freeze
+
+retrieval:
+  method: bm25
+  k1: 1.5
+  b: 0.75
+  variant: lucene
+  eval_k: [5, 10, 20]
+
+report:
+  bootstrap_n: 10000
+  alpha: 0.05
