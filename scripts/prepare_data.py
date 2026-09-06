@@ -61,12 +61,32 @@ def main():
     print("docs in a cluster of >1:", (df["dup_cluster"].map(sizes) > 1).sum())
 
     print(sizes.sort_values(ascending=False).head())
-    top = sizes.idxmax()
-    for t in df[df.dup_cluster == top]["text"].head(3):
-        print("\n---", t[:400])
-    # 5. split via assign_splits(df, SplitConfig(**cfg["split"], seed=cfg["seed"]))
+    # 5. assign leakage-safe splits
+    df["split"] = assign_splits(
+        df,
+        SplitConfig(**cfg["split"], seed=cfg["seed"])
+    )
+
+    print(split_report(df, label_col="label_name"))
+
+    per_split = df.pivot_table(
+        index="label_name",
+        columns="split",
+        aggfunc="size",
+        fill_value=0,
+    )
+
+    print("classes absent from dev:", (per_split["dev"] == 0).sum())
+    print("classes with dev support >= 10:", (per_split["dev"] >= 10).sum())
     # 6. print split_report + the per-class dev support checks
     # 7. write data/processed/ledgar_5k.parquet
+    out = Path("data/processed/ledgar_5k.parquet")
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    df.to_parquet(out)
+
+    print("wrote", out, df.shape)
 
 
 if __name__ == "__main__":
