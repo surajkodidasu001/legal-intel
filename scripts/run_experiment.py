@@ -12,7 +12,7 @@ from legalintel.utils.seeds import set_seeds
 def main():
     cfg = yaml.safe_load(Path("configs/milestone1.yaml").read_text())
     set_seeds(cfg["seed"])
-    df = pd.read_parquet("data/processed/ledgar_5k.parquet")
+    df = pd.read_parquet("data/processed/ledgar_60000.parquet")
     train = df[df["split"] == "train"]
     dev = df[df["split"] == "dev"]
     X_train = train["text"]

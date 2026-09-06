@@ -59,7 +59,7 @@ class FitResult:
 
 
 def fit_and_score(
-    name: str, X_train, y_train, X_eval, y_eval, seed: int = 20260905, n_jobs: int = -1
+    name: str, X_train, y_train, X_eval, y_eval, seed: int = 20260905, n_jobs: int = 2
 ) -> FitResult:
     est, grid = GRIDS[name]
     n_candidates = int(np.prod([len(v) for v in grid.values()]))
