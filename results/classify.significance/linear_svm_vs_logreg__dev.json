@@ -1,0 +1,25 @@
+{
+  "config": {
+    "metric": "accuracy",
+    "n_perm": 10000,
+    "test": "paired_randomization"
+  },
+  "created_at": 1788734639.2895648,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "classify.significance",
+  "git_sha": "a9ad0a0",
+  "metrics": {
+    "mean_diff": 0.007666666666666666,
+    "n": 6000,
+    "p_value": 0.0009
+  },
+  "n_examples": 6000,
+  "notes": "paired test on identical dev examples; marginal bootstrap CIs for these two models overlap, but the paired test rejects equality",
+  "resources": {},
+  "split": "dev",
+  "timings": {},
+  "variant": "linear_svm_vs_logreg"
+}
