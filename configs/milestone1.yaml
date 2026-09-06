@@ -23,6 +23,7 @@ split:
   group_col: dup_cluster
 
 classify:
+  n_classes: 100
   models: [logreg, naive_bayes, linear_svm]
   tuning_budget: 12        # identical per model -- enforced in code
   eval_split: dev          # test stays closed until freeze
