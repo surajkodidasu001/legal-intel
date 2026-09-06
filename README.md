@@ -33,7 +33,62 @@ Four-way, group-aware: `train / dev / calib / test`.
   selection is contaminated calibration.
 - **Temporal mode** — train on older documents, test on newer, to measure drift
   rather than assume it away.
+## Near-duplicate handling
 
+Legal text is heavily templated. The same clause is filed by different
+companies with only names and dates changed, so a random split puts
+near identical documents on both sides of the train/test boundary and
+inflates every score.
+
+Documents are clustered with MinHash and LSH over 5 word shingles at a
+Jaccard threshold of 0.8, and splits are assigned by cluster so that all
+members of a cluster stay on one side.
+
+The threshold was set by inspection rather than by default. At 5,000
+sampled provisions the clustering produced 4,917 clusters, with 138
+documents (2.8 percent) sharing a cluster with at least one other
+document. The largest cluster held 8 documents. Reading them confirmed
+the expected pattern: identical termination clauses that differed only
+in the closing date (July 2016, March 2017, April 2016) and in one
+instance a single negation. These are the same template pulled from
+three different SEC filings, which is exactly the case the clustering
+is meant to catch.
+
+The 2.8 percent figure understates the problem for the full corpus.
+Sampling 5,000 out of 60,000 separates most duplicate pairs before
+clustering ever runs, so the rate at full scale is expected to be
+higher. That number will be measured on the full corpus and reported
+alongside this one.
+
+## Metrics and why 5K produces no reported results
+
+LEDGAR has 100 classes and a long tail. The rarest class has 23
+examples in 60,000. At a 5,000 document sample with a 70/10/10/10
+split, 9 classes have zero documents in dev and only 12 classes have
+dev support of 10 or more. Macro F1 computed on that dev set is
+measuring the sample, not the model: a single document changing its
+prediction can move a class score by 20 points.
+
+Because of this, the 5,000 document configuration is treated as a
+plumbing milestone. It exists to prove the pipeline runs end to end
+and produces no numbers that appear in any results table. Track A
+experiments run on the full 60,000 documents, where the same 10
+percent dev split gives roughly 6,000 documents and the rarest class
+has about 2 rather than 0.2.
+
+Reported classification metrics are:
+
+1. Macro F1 over all 100 classes, as the headline. It weights the tail
+   equally, which is what accuracy hides when the head dominates.
+2. Micro F1, for comparability with published LexGLUE results.
+3. The count of classes with zero dev support, reported with every
+   macro F1 so the reader knows how much of the label space the
+   average actually covers.
+
+An earlier plan to report macro F1 restricted to classes with support
+of 10 or more was dropped. At this scale that restriction covers 12 of
+100 classes, which discards most of the label space rather than
+stabilising the metric.
 ## Tracks
 
 | Track | Question | Key outputs |
