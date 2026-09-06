@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from legalintel.classify.baselines import fit_and_score
 from legalintel.utils.results import ExperimentResult
 from legalintel.utils.seeds import set_seeds
-
+from legalintel.utils.stats import bootstrap_macro_f1
 
 def main():
     cfg = yaml.safe_load(Path("configs/milestone1.yaml").read_text())
@@ -27,7 +27,16 @@ def main():
             X_dev,
             y_dev,
             seed=cfg["seed"],
+        )       
+        point, lo, hi = bootstrap_macro_f1(
+            y_dev,
+            r.preds,
+            n_boot=100,
+            seed=cfg["seed"],
         )
+
+        assert abs(point - r.metrics["f1_macro"]) < 1e-9, \
+            "y_dev and preds misaligned"
 
         print(r.name, r.metrics, round(r.train_seconds, 1))
 
@@ -43,7 +52,10 @@ def main():
    	       **r.metrics,
    	       "zero_support_classes": int(
 		   cfg["classify"]["n_classes"] - y_dev.nunique()),
+	       "f1_macro_lo": lo,
+               "f1_macro_hi": hi,
 },
+
             timings={
                 "train_seconds": r.train_seconds,
                 "predict_seconds_per_1k": r.predict_seconds_per_1k,

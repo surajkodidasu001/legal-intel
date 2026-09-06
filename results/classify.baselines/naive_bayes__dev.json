@@ -10,16 +10,18 @@
     "n_docs": 60000,
     "tuning_budget": 12
   },
-  "created_at": 1788681863.183156,
+  "created_at": 1788729162.210659,
   "env": {
     "platform": "macOS-26.6.2-arm64-arm-64bit",
     "python": "3.11.16"
   },
   "experiment": "classify.baselines",
-  "git_sha": "c43faed",
+  "git_sha": "030a6cc",
   "metrics": {
     "accuracy": 0.8366666666666667,
     "f1_macro": 0.7444805695908187,
+    "f1_macro_hi": 0.753855698584425,
+    "f1_macro_lo": 0.7275848318347623,
     "f1_micro": 0.8366666666666667,
     "zero_support_classes": 0
   },
@@ -28,8 +30,8 @@
   "resources": {},
   "split": "dev",
   "timings": {
-    "predict_seconds_per_1k": 0.0895395554980496,
-    "train_seconds": 62.197020624997094
+    "predict_seconds_per_1k": 0.09047709733325368,
+    "train_seconds": 62.495204959006514
   },
   "variant": "naive_bayes"
 }

@@ -34,3 +34,37 @@ def paired_randomization_test(a, b, n_perm: int = 10_000, seed: int = 0) -> dict
     null = (signs * diff).mean(axis=1)
     p = float((np.abs(null) >= abs(observed) - 1e-12).mean())
     return {"mean_diff": observed, "p_value": p, "n": int(len(diff))}
+def bootstrap_macro_f1(y_true, y_pred, n_boot=1000, alpha=0.05, seed=0):
+    """Resample examples and recompute macro-F1 each time."""
+    from sklearn.metrics import f1_score
+
+    rng = np.random.default_rng(seed)
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    n = len(y_true)
+
+    boots = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, n)
+        boots.append(
+            f1_score(
+                y_true[idx],
+                y_pred[idx],
+                average="macro",
+                zero_division=0,
+            )
+        )
+
+    lo, hi = np.percentile(
+        boots,
+        [100 * alpha / 2, 100 * (1 - alpha / 2)],
+    )
+
+    point = f1_score(
+        y_true,
+        y_pred,
+        average="macro",
+        zero_division=0,
+    )
+
+    return float(point), float(lo), float(hi)

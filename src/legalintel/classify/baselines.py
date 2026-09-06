@@ -55,6 +55,7 @@ class FitResult:
     predict_seconds_per_1k: float
     metrics: dict[str, float]
     per_example_correct: np.ndarray = field(repr=False, default=None)
+    preds: np.ndarray = field(repr=False, default=None)
     estimator: Any = field(repr=False, default=None)
 
 
@@ -92,5 +93,6 @@ def fit_and_score(
             "accuracy": float(correct.mean()),
         },
         per_example_correct=correct,
+	preds=np.asarray(preds),
         estimator=search.best_estimator_,
     )
