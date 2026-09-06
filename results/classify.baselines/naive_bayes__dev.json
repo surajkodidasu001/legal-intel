@@ -7,29 +7,29 @@
       "linear_svm"
     ],
     "n_classes": 100,
-    "n_docs": 5000,
+    "n_docs": 60000,
     "tuning_budget": 12
   },
-  "created_at": 1788664829.576382,
+  "created_at": 1788681863.183156,
   "env": {
     "platform": "macOS-26.6.2-arm64-arm-64bit",
     "python": "3.11.16"
   },
   "experiment": "classify.baselines",
-  "git_sha": "b9611fd",
+  "git_sha": "c43faed",
   "metrics": {
-    "accuracy": 0.742,
-    "f1_macro": 0.5949349876810583,
-    "f1_micro": 0.742,
-    "zero_support_classes": 9
+    "accuracy": 0.8366666666666667,
+    "f1_macro": 0.7444805695908187,
+    "f1_micro": 0.8366666666666667,
+    "zero_support_classes": 0
   },
-  "n_examples": 500,
+  "n_examples": 6000,
   "notes": "5K plumbing run, not a reported result",
   "resources": {},
   "split": "dev",
   "timings": {
-    "predict_seconds_per_1k": 0.09154349996242672,
-    "train_seconds": 2.20593745802762
+    "predict_seconds_per_1k": 0.0895395554980496,
+    "train_seconds": 62.197020624997094
   },
   "variant": "naive_bayes"
 }
