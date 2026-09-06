@@ -36,10 +36,34 @@ def main():
 
     print(df.shape)
     print(df.head())
+    # 3. create deterministic document ID
+    df["doc_id"] = df["text"].map(
+        lambda t: hashlib.sha1(t.encode()).hexdigest()[:16]
+    )
 
     # 2. sample cfg["data"]["n_docs"] with random_state=cfg["seed"]
     # 3. doc_id = sha1 of text, first 16 chars
-    # 4. dup_cluster via cluster_near_duplicates(ids, texts, DedupConfig(**cfg["dedup"]))
+    # 4. cluster near-duplicates, then map back onto the frame
+    clusters = cluster_near_duplicates(
+
+            df["doc_id"].tolist(),
+	    df["text"].tolist(),
+            DedupConfig(**cfg["dedup"])
+
+    )
+
+    df["dup_cluster"] = df["doc_id"].map(clusters)
+
+    sizes = df.groupby("dup_cluster").size()
+
+    print("clusters:", len(sizes), "of", len(df), "docs")
+
+    print("docs in a cluster of >1:", (df["dup_cluster"].map(sizes) > 1).sum())
+
+    print(sizes.sort_values(ascending=False).head())
+    top = sizes.idxmax()
+    for t in df[df.dup_cluster == top]["text"].head(3):
+        print("\n---", t[:400])
     # 5. split via assign_splits(df, SplitConfig(**cfg["split"], seed=cfg["seed"]))
     # 6. print split_report + the per-class dev support checks
     # 7. write data/processed/ledgar_5k.parquet
