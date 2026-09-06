@@ -80,7 +80,7 @@ def main():
     print("classes with dev support >= 10:", (per_split["dev"] >= 10).sum())
     # 6. print split_report + the per-class dev support checks
     # 7. write data/processed/ledgar_5k.parquet
-    out = Path("data/processed/ledgar_5k.parquet")
+    out = Path(f"data/processed/ledgar_{cfg['data']['n_docs']}.parquet")
 
     out.parent.mkdir(parents=True, exist_ok=True)
 

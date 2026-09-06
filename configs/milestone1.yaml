@@ -7,7 +7,7 @@ seed: 20260905
 
 data:
   dataset: ledgar          # LexGLUE/LEDGAR via HuggingFace: coastalcph/lex_glue
-  n_docs: 5000
+  n_docs: 60000
   text_col: text
   label_col: label
   cache_dir: .cache/data
