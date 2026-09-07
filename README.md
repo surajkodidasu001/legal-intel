@@ -262,6 +262,38 @@ Note on tooling. sklearn 1.9 emits a stratification warning during
 CalibratedClassifierCV even with a frozen estimator. The frozen model is not
 refit — verified by checking that its coefficients are unchanged and that only
 one calibrated classifier is produced — so the warning is spurious here.
+## Error analysis
+
+Linear SVM reaches 0.8028 macro F1. This asks where the remaining error is.
+
+Support does not explain the failures. Brokers has 30 dev examples and scores
+0.984; Applicable Laws has 38 and scores 0.200. The worst classes are not the
+rarest ones.
+
+The confusion pairs show why. The dominant errors are between labels that are
+near synonyms:
+
+| true | predicted | count |
+|---|---|---|
+| Applicable Laws | Governing Laws | 28 |
+| Terms | Terminations | 15 |
+| Governing Laws | Applicable Laws | 12 |
+| Definitions | Defined Terms | 12 |
+| Taxes | Withholdings | 10 |
+| Withholdings | Tax Withholdings | 10 |
+| Integration | Entire Agreements | 9 |
+| No Waivers | Waivers | 9 |
+
+Several are bidirectional, which is what you would expect if the boundary is
+arbitrary rather than learnable.
+
+Reading the misclassified text settles it. One provision labelled Applicable
+Laws and predicted Governing Laws reads in full: "This Agreement shall be
+governed by the laws of the State of Arizona." That is a governing law clause.
+The model is not wrong; the two labels are not separable from provision text.
+
+So a meaningful share of the residual error is label noise rather than model
+error, and 0.80 macro F1 may be near the ceiling for this taxonomy.
 
 ## Limitations
 
