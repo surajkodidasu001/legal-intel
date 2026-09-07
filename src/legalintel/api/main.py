@@ -44,8 +44,10 @@ def load_artifacts() -> None:
     manifest = ARTIFACTS / "manifest.json"
     if manifest.exists():
         _state["manifest"] = json.loads(manifest.read_text())
-    # TODO milestone 1: load BM25 index + classifier from ARTIFACTS
-
+    clf_path = ARTIFACTS / "classifier.joblib"
+    if clf_path.exists():
+        import joblib
+        _state["classifier"] = joblib.load(clf_path)
 
 @app.get("/health")
 def health() -> dict:
@@ -74,5 +76,6 @@ def classify(req: ClassifyRequest) -> dict:
     if hasattr(clf, "predict_proba"):
         probs = clf.predict_proba([req.text])[0]
         out["confidence"] = float(max(probs))
-        out["calibrated"] = bool(_state.get("manifest", {}).get("calibrated", False))
+        out["calibration"] = _state.get("manifest", {}).get("calibration", "none")
+        out["calibration"] = _state.get("manifest", {}).get("calibration", "none")
     return out
