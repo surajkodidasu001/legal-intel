@@ -295,6 +295,37 @@ The model is not wrong; the two labels are not separable from provision text.
 So a meaningful share of the residual error is label noise rather than model
 error, and 0.80 macro F1 may be near the ceiling for this taxonomy.
 
+## Label ambiguity: how much of the error is the taxonomy?
+
+Error analysis showed the dominant confusions are between labels that read as
+synonyms. The question is how much of the macro F1 gap those pairs account for.
+
+Six pairs were merged: Applicable Laws into Governing Laws, Defined Terms into
+Definitions, No Waivers into Waivers, Tax Withholdings into Withholdings,
+Integration into Entire Agreements, Authorizations into Authority.
+
+| Configuration | classes | macro F1 |
+|---|---|---|
+| Full taxonomy | 100 | 0.8028 |
+| Six synonym pairs merged | 94 | 0.8210 |
+| Six random pairs merged (control) | 94 | 0.7981 |
+
+The control matters. Merging labels could raise macro F1 mechanically, by
+reducing the class count and giving merged classes more support. To test that,
+six randomly chosen pairs of unrelated classes were merged instead, using the
+same seed and the same model.
+
+The random merge scored slightly worse than the full taxonomy, not better. So
+there is no mechanical bonus from having fewer classes; merging unrelated
+categories creates an incoherent target and costs a little accuracy. The
+synonym merge's gain of 1.8 points is therefore semantic, not arithmetic.
+
+Two limits on this result. The control is a single random draw with no error
+bar; repeating it across seeds would give a spread. And 1.8 points is a modest
+share of the remaining gap, so label ambiguity is real and measurable but is not
+the dominant source of error.
+
+
 ## Limitations
 
 - Retrieval relevance judgments are partly **derived from citation structure**,
