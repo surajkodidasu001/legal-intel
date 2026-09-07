@@ -1,0 +1,24 @@
+{
+  "config": {
+    "calibrated_on": "calib",
+    "method": "isotonic",
+    "model": "logreg",
+    "n_docs": 60000
+  },
+  "created_at": 1788752588.609816,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "classify.calibration",
+  "git_sha": "0f037a9",
+  "metrics": {
+    "brier": 0.27361402525562734
+  },
+  "n_examples": 6000,
+  "notes": "calibration fit on held-out calib split, scored on dev",
+  "resources": {},
+  "split": "dev",
+  "timings": {},
+  "variant": "logreg_isotonic"
+}

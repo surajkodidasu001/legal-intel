@@ -47,6 +47,7 @@ def main():
             config={
                 **cfg["classify"],
                 "n_docs": cfg["data"]["n_docs"],
+		"best_params": r.best_params,
             },
             metrics={
    	       **r.metrics,
