@@ -35,6 +35,7 @@ def main() -> int:
 
     runs = [r for r in load_all() if r.get("split") == args.split]
     by_exp: dict[str, list[dict]] = defaultdict(list)
+    sig = {r["variant"]: r["metrics"] for r in load_all("classify.significance")}
     for r in runs:
         by_exp[r["experiment"]].append(r)
 
@@ -59,8 +60,17 @@ def main() -> int:
             f"{best['metrics'][metric] - runner_up['metrics'][metric]:+.4f}"
             if runner_up else "—"
         )
-        sig = best.get("metrics", {}).get("p_value")
-        sig_s = "n/a" if sig is None else ("yes" if sig < 0.05 else f"no (p={sig:.3f})")
+        if runner_up:
+            key = f"{best['variant']}_vs_{runner_up['variant']}"
+            rev = f"{runner_up['variant']}_vs_{best['variant']}"
+            entry = sig.get(key) or sig.get(rev)
+        else:
+            entry = None
+        sig_s = "not tested" if entry is None else (
+            f"p={entry['p_value']:.4f}"
+            if entry["p_value"] < 0.05
+            else f"n.s. (p={entry['p_value']:.3f})"
+        )
         lines.append(
             f"| {label} | {', '.join(r['variant'] for r in rows)} | {metric} "
             f"| **{best['variant']}** ({best['metrics'][metric]:.4f}) | {margin} | {sig_s} |"
