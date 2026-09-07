@@ -1,0 +1,32 @@
+{
+  "config": {
+    "merges": {
+      "Authorizations": "Transactions With Affiliates",
+      "Binding Effects": "Vacations",
+      "Existence": "Modifications",
+      "Releases": "Notices",
+      "Remedies": "Effectiveness",
+      "Subsidiaries": "Definitions"
+    },
+    "n_classes": 94,
+    "n_docs": 60000
+  },
+  "created_at": 1788764700.110591,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "classify.label_merge",
+  "git_sha": "1a91c79",
+  "metrics": {
+    "accuracy": 0.8688333333333333,
+    "f1_macro": 0.798101822132905,
+    "f1_micro": 0.8688333333333333
+  },
+  "n_examples": 6000,
+  "notes": "control: six random pairs merged",
+  "resources": {},
+  "split": "dev",
+  "timings": {},
+  "variant": "linear_svm_random_control"
+}

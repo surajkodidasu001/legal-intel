@@ -1,0 +1,32 @@
+{
+  "config": {
+    "merges": {
+      "Applicable Laws": "Governing Laws",
+      "Authorizations": "Authority",
+      "Defined Terms": "Definitions",
+      "Integration": "Entire Agreements",
+      "No Waivers": "Waivers",
+      "Tax Withholdings": "Withholdings"
+    },
+    "n_classes": 94,
+    "n_docs": 60000
+  },
+  "created_at": 1788763843.906641,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "classify.label_merge",
+  "git_sha": "1a91c79",
+  "metrics": {
+    "accuracy": 0.8901666666666667,
+    "f1_macro": 0.821046716657591,
+    "f1_micro": 0.8901666666666667
+  },
+  "n_examples": 6000,
+  "notes": "six synonym pairs merged; baseline on full taxonomy is 0.8028",
+  "resources": {},
+  "split": "dev",
+  "timings": {},
+  "variant": "linear_svm_merged"
+}
