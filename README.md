@@ -226,6 +226,43 @@ and every class is represented. The 5,000 document numbers were measuring
 data scarcity, not model quality, which is why none of them are reported as
 results.
 
+## Calibration study
+
+Raw classifier scores are not probabilities. The question is whether a model
+that reports 90 percent confidence is right 90 percent of the time.
+
+Calibration is fit on the held-out calib split. Fitting it on train would use
+data the model has already seen; fitting it on dev would use the split that
+selected the model. calib exists for this and nothing else.
+
+Measured with multiclass Brier score, the mean squared distance between the
+predicted probability vector and the one-hot truth. Lower is better. Uniform
+guessing across 100 classes scores about 0.99.
+
+| Model | none | Platt (sigmoid) | isotonic |
+|---|---|---|---|
+| Logistic Regression | 0.3433 | 0.2665 | 0.2736 |
+| Linear SVM | n/a | 0.1962 | 0.1976 |
+
+Linear SVM has no predict_proba, so there is no uncalibrated cell for it.
+
+Two results. Calibration matters: it improves logistic regression by 22 percent
+for the cost of one extra fit on data already set aside. And the choice of model
+matters roughly ten times more than the choice of calibration method. Platt and
+isotonic differ by 0.001 to 0.007 within a row; the two models differ by about
+0.07 within a column.
+
+The caveat raised in the classification study is resolved. Linear SVM's lack of
+native probability output was not a real limitation: once wrapped in a
+two-parameter-per-class sigmoid fit on held-out data, it produces the best
+calibrated probabilities of anything tested, while also being the most accurate
+and the fastest to train.
+
+Note on tooling. sklearn 1.9 emits a stratification warning during
+CalibratedClassifierCV even with a frozen estimator. The frozen model is not
+refit — verified by checking that its coefficients are unchanged and that only
+one calibrated classifier is produced — so the warning is spurious here.
+
 ## Limitations
 
 - Retrieval relevance judgments are partly **derived from citation structure**,
