@@ -31,6 +31,17 @@ Conda env `legal`, Python 3.11, sklearn 1.9.
   config, metrics, timings. `scripts/build_report.py` regenerates the
   decision table and now pulls p-values from classify.significance.
 
+- **Error analysis** (`scripts/run_error_analysis.py`). Support does not
+  explain failures: Brokers with 30 dev examples scores 0.984, Applicable Laws
+  with 38 scores 0.200. Dominant confusions are synonym pairs, several
+  bidirectional. One provision labelled Applicable Laws reads in full "This
+  Agreement shall be governed by the laws of the State of Arizona".
+
+- **Label ambiguity** (`run_label_merge.py`, `run_label_merge_control.py`).
+  Merging six synonym pairs: 0.8028 -> 0.8210 on 94 classes. Control merging
+  six random pairs: 0.7981, slightly worse than baseline. The gain is semantic,
+  not an artifact of fewer classes. Single random draw, no error bar.
+
 ## Known open items
 
 - Training time is in the JSON but not in the decision table, so cost is
@@ -44,11 +55,9 @@ Conda env `legal`, Python 3.11, sklearn 1.9.
 
 ## Next: Phase 1
 
-1. Error analysis. Which of the 100 classes does Linear SVM fail on, are
-   confusions systematic, does the tail fail differently from the head.
-2. API and Docker. `src/legalintel/api/main.py` returns 503 on every
-   endpoint; artifact persistence and loading are TODO. Docker never built.
-3. Test-split freeze. Final run on test, once, after experiments are frozen.
+1. API and Docker. `src/legalintel/api/main.py` returns 503 on every endpoint;
+   artifact persistence and loading are TODO. Docker never built.
+2. Test-split freeze. Final run on test, once, after experiments are frozen.
 
 ## Later phases
 
