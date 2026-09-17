@@ -325,6 +325,96 @@ bar; repeating it across seeds would give a spread. And 1.8 points is a modest
 share of the remaining gap, so label ambiguity is real and measurable but is not
 the dominant source of error.
 
+## Dask scaling
+
+**Question:** does parallel processing with Dask actually improve throughput
+for the dedup preprocessing step, and where does scaling efficiency break
+down?
+
+**Motivation:** Phase 1 found `n_jobs=-1` was ~10x *slower* than `n_jobs=2`
+for CV training on this machine (memory contention). Naive parallelism was
+harmful there, so Phase 2 tests Dask rather than assuming more workers means
+faster.
+
+Profiling `cluster_near_duplicates` (`scripts/profile_dedup.py`, full 60K
+corpus) confirmed minhash computation is 97.1% of wall time; LSH+union-find
+is 2.9%. That split holds from 5K docs (97.5%/2.5%) to 60K — only minhash is
+worth parallelizing, and that conclusion doesn't shift with corpus size.
+LSH insert/query is stateful/incremental and union-find is a shared mutable
+structure, so both stay sequential in the driver; only minhash moves to Dask
+(`src/legalintel/data/dedup_dask.py`).
+
+Dask output must produce identical clusters to the sequential version before
+any speed number is trusted (`tests/test_dedup_dask_equivalence.py`), checked
+on synthetic near-dupes and a real 300-document LEDGAR sample.
+
+Worker scaling, full 60K corpus, `db.from_sequence` (naive):
+
+| workers | docs/sec | speedup | efficiency |
+|---|---|---|---|
+| baseline (pandas) | 1,436 | — | — |
+| 1 | 1,274 | 0.89x | 88.7% |
+| 2 | 2,016 | 1.40x | 70.2% |
+| 4 | 2,792 | 1.94x | 48.6% |
+| 8 | 3,985 | 2.77x | 34.7% |
+
+Every run emitted Dask's own "Sending large graph of size 42.18 MiB" warning:
+`db.from_sequence` embeds the full corpus in the task graph and re-serializes
+it on every call. Switching to `client.scatter()` (push data once as
+futures, reference by future instead):
+
+| workers | docs/sec | speedup | efficiency |
+|---|---|---|---|
+| baseline (pandas) | 1,444 | — | — |
+| 1 | 1,271 | 0.88x | 88.0% |
+| 2 | 2,201 | 1.52x | 76.2% |
+| 4 | 3,705 | 2.57x | 64.1% |
+| 8 | 5,491 | 3.80x | 47.5% |
+
+Lifts throughput and efficiency at every worker count, most visibly at 8
+workers (34.7% → 47.5% efficiency). Not the whole story, though — efficiency
+still declines with more workers even here.
+
+**Root cause of the remaining decline.** Every Dask call pays three
+separable costs, instrumented directly rather than inferred:
+
+| cost | typical size | scales with workers? | scales with corpus size? |
+|---|---|---|---|
+| cluster startup + teardown | ~1.0–1.7s | no | no (confirmed at 5K/20K/60K) |
+| `scatter()` (uploading doc text) | ~0.1–2.2s | no | yes, roughly linear |
+| gather overhead beyond ideal parallel compute | ~0.1–1.2s | no clear trend | no clear trend |
+
+A corpus-size sweep (5K/20K/60K) set out to test one combined "fixed
+overhead" number, but that conflated two things that behave differently:
+cluster lifecycle cost really is fixed, but scatter cost scales with corpus
+size and does **not** amortize away — its share of total compute time rose
+from 3.1% → 25.1% (5K docs) and 5.2% → 22.4% (60K docs) as workers went from
+1 to 8. Mechanism: `scatter_seconds` for a given corpus size stays flat
+across worker counts (same total bytes moved regardless of worker count),
+while `compute_seconds` shrinks sharply as workers increase. A cost that
+doesn't shrink, divided by a total that does, necessarily grows as a
+percentage — this is why efficiency drops fastest at higher worker counts
+across every comparison in this phase, and it's a property of the transfer
+step, not a flaw in the parallelization.
+
+**Recommendation:** 8 workers + `client.scatter()` for max throughput (5,491
+docs/sec, 3.80x speedup); 4 workers for max efficiency (3,705 docs/sec,
+64.1% efficiency, still 2.57x speedup). No single "best" worker count
+independent of which is being optimized for. Efficiency should improve
+further beyond 60K docs, since cluster lifecycle cost (the genuinely fixed
+piece) would amortize over more work — untested past 60K here, an
+expectation rather than a measured result.
+
+**Reproduce:**
+```
+python scripts/profile_dedup.py --input data/processed/ledgar_60000.parquet
+python -m pytest tests/test_dedup_dask_equivalence.py -v
+python scripts/benchmark_dask_dedup.py --input data/processed/ledgar_60000.parquet
+--compare-scatter --fixed-cost-sweep
+```
+Results in `results/dask.scaling/*.json`, same `ExperimentResult` format as
+every other experiment in this repo.
+
 
 ## Limitations
 
@@ -334,6 +424,19 @@ the dominant source of error.
 - Dask scaling here is **multi-process on one machine**, not distributed
   computing across a cluster. The scaling curve and its flattening point are the
   interesting part; the claim stops there.
+- Dask worker cluster recreation is flaky: transient `CommClosedError`/heartbeat
+  failures observed at 8 workers on 3 separate runs. A retry covers cluster
+  *startup* but not a mid-run failure on an already-started worker; runs still
+  completed correctly (confirmed via equivalence tests) but this needs real
+  retry/recovery logic for production use.
+- Dask worker/driver peak memory is polled every 0.05–0.1s, not traced
+  continuously, and the two peaks aren't guaranteed simultaneous — reported
+  totals are upper bounds, not exact simultaneous snapshots.
+- Dask scaling numbers are single runs per configuration, no repeated trials
+  or confidence intervals. Acceptable here because the effect (efficiency
+  falling from ~88% to 35–47% across worker counts) is large and
+  mechanistically explained, not a close call needing statistics to resolve,
+  unlike the classifier comparison in Phase 1.
 - Legal NER labels are partly rule-derived and imperfect.
 - Temporal and jurisdictional coverage is limited by the public datasets used.
 - This is an **experimental research system, not legal advice.**
