@@ -1,0 +1,41 @@
+{
+  "config": {
+    "backend": "dask",
+    "n_workers": 4,
+    "num_perm": 128,
+    "shingle_k": 5,
+    "threshold": 0.8,
+    "use_scatter": true
+  },
+  "created_at": 1789583361.972349,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "dask.scaling",
+  "git_sha": "9a78fdc",
+  "metrics": {
+    "docs_per_sec": 2049.5116237896327,
+    "wall_seconds": 2.439605583087541
+  },
+  "n_examples": 5000,
+  "notes": "Dask LocalCluster, process-based workers, minhash computation only (LSH+union-find sequential in driver, per profile_dedup.py finding). total_peak_rss_mb = driver_peak_rss_mb (sampled on the benchmark process) + worker_peak_rss_mb (polled across all worker subprocesses via client.run() every 0.1s during compute). Both are max-observed via polling, not a continuous trace, so a short-lived spike between polls can be missed; also driver and worker peaks may not have occurred at the same instant, so total_peak_rss_mb is an upper bound, not a simultaneous snapshot. timings.cluster_startup_seconds + teardown_seconds is fixed overhead per call, independent of corpus size -- does not shrink with more workers. Uses client.scatter() to push data to workers once as futures, avoiding embedding the full corpus in the task graph.",
+  "resources": {
+    "driver_peak_rss_mb": 1042.5625,
+    "total_peak_rss_mb": 1715.125,
+    "worker_peak_rss_mb": 672.5625
+  },
+  "split": "n5000docs",
+  "timings": {
+    "cluster_startup_seconds": 1.072132125031203,
+    "compute_seconds": 1.1264606670010835,
+    "gather_seconds": 0.9465122499968857,
+    "ideal_parallel_compute_seconds": 0.8698142081848346,
+    "merge_seconds": 0.07601149997208267,
+    "scatter_seconds": 0.17741275008302182,
+    "submit_seconds": 0.0004076249897480011,
+    "teardown_seconds": 0.1613436669576913,
+    "wall_seconds": 2.439605583087541
+  },
+  "variant": "dask_workers_4_scattered"
+}

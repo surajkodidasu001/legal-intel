@@ -1,0 +1,32 @@
+{
+  "config": {
+    "backend": "sequential",
+    "n_workers": 1,
+    "num_perm": 128,
+    "shingle_k": 5,
+    "threshold": 0.8
+  },
+  "created_at": 1789583456.538711,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "dask.scaling",
+  "git_sha": "9a78fdc",
+  "metrics": {
+    "docs_per_sec": 1434.8926316973243,
+    "wall_seconds": 41.814975333050825
+  },
+  "n_examples": 60000,
+  "notes": "Sequential baseline: no Dask, single process -- driver and total are the same.",
+  "resources": {
+    "driver_peak_rss_mb": 783.859375,
+    "total_peak_rss_mb": 783.859375,
+    "worker_peak_rss_mb": 0.0
+  },
+  "split": "n60000docs",
+  "timings": {
+    "wall_seconds": 41.814975333050825
+  },
+  "variant": "baseline_pandas"
+}
