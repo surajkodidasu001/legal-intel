@@ -7,6 +7,3 @@ artifacts/
 .venv/
 .pytest_cache/
 README_RESULTS.md
-data/
-artifacts/
-artifacts/

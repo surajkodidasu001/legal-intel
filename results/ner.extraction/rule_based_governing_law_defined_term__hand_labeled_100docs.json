@@ -1,0 +1,33 @@
+{
+  "config": {
+    "matching": "case_insensitive_text_match",
+    "target_labels": [
+      "GOVERNING_LAW",
+      "DEFINED_TERM"
+    ]
+  },
+  "created_at": 1789739111.617634,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.16"
+  },
+  "experiment": "ner.extraction",
+  "git_sha": "58a2e1a",
+  "metrics": {
+    "defined_term_f1": 0.9565217391304348,
+    "defined_term_precision": 1.0,
+    "defined_term_recall": 0.9166666666666666,
+    "f1": 0.972972972972973,
+    "governing_law_f1": 1.0,
+    "governing_law_precision": 1.0,
+    "governing_law_recall": 1.0,
+    "precision": 1.0,
+    "recall": 0.9473684210526315
+  },
+  "n_examples": 100,
+  "notes": "Gold set: 17 of 100 docs have at least one label, 19 total gold entities. Text-match (case-insensitive) not char-offset-match -- see script docstring.",
+  "resources": {},
+  "split": "hand_labeled_100docs",
+  "timings": {},
+  "variant": "rule_based_governing_law_defined_term"
+}

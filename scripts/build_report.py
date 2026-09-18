@@ -19,9 +19,9 @@ from legalintel.utils.results import load_all  # noqa: E402
 DECISIONS = [
     ("Document classification", "classify.baselines", "f1_macro"),
     ("Probability quality", "classify.calibration", "brier"),
-    ("NER", "ner.baselines", "f1"),
+    ("NER", "ner.extraction", "f1"),
     ("Retrieval", "retrieval.methods", "ndcg@10"),
-    ("Processing", "processing.scaling", "docs_per_sec"),
+    ("Processing", "dask.scaling", "docs_per_sec"),
     ("Storage", "storage.options", "p95_latency_ms"),
 ]
 LOWER_IS_BETTER = {"brier", "log_loss", "p95_latency_ms"}
@@ -33,7 +33,7 @@ def main() -> int:
     ap.add_argument("--split", default="dev", help="'dev' while iterating, 'test' after freeze")
     args = ap.parse_args()
 
-    runs = [r for r in load_all() if r.get("split") == args.split]
+    runs = [r for r in load_all() if not r["experiment"].startswith("classify.") or r.get("split") == args.split]
     by_exp: dict[str, list[dict]] = defaultdict(list)
     sig = {r["variant"]: r["metrics"] for r in load_all("classify.significance")}
     for r in runs:

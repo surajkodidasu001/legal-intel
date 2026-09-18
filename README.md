@@ -415,6 +415,96 @@ python scripts/benchmark_dask_dedup.py --input data/processed/ledgar_60000.parqu
 Results in `results/dask.scaling/*.json`, same `ExperimentResult` format as
 every other experiment in this repo.
 
+## NER extraction
+
+**Question:** can pretrained spaCy plus deterministic rules extract useful
+legal entities from LEDGAR contract provisions, and how do you know the
+rules are actually right — not just "looked right when skimmed"?
+
+**Baseline.** Pretrained `en_core_web_sm` on real LEDGAR text is noisy in a
+specific, structural way: `ORG` dominates (74.5% of docs at a 200-doc
+sample) but much of it is contract-defined terms mistagged by a model
+trained on general English, which has no concept of "defined term" —
+`Guarantor` tagged `PRODUCT`, `Tax` tagged `PERSON`, `Obligations` tagged
+`NORP`. Rather than fine-tune spaCy on this, two deterministic regex rules
+target patterns that are near-fixed in contract boilerplate:
+`GOVERNING_LAW` ("State of X") and `DEFINED_TERM` ("(the/this "X")").
+
+**The methodology mistake worth naming.** Both rules were first validated
+for precision only — every match they produced against a 1000-doc sample
+was correct — and that felt like enough. It wasn't. Precision-only
+validation can't catch what a rule silently misses, and checking that
+turned out to matter:
+
+1. Spot-checking a sample of "no match" docs (not just the matches) found
+   two real recall gaps: `GOVERNING_LAW` missed ALL-CAPS clauses (contracts
+   often put governing-law text in caps for legal conspicuousness), and
+   `DEFINED_TERM` missed declarations with whitespace padding inside the
+   quotes (`(the " Moving Party ")`, likely a document-conversion artifact).
+2. Fixing the ALL-CAPS case with a blanket `re.IGNORECASE` introduced a
+   *new* bug: it also weakened the capture group's uppercase requirement
+   and had no word boundary, so it matched lowercase words as fake states
+   (`"State of organization and"` → captured `organization and`) and
+   matched `"state of"` as a literal substring inside `"estate of"`. Caught
+   by re-running candidate generation on the same batch and reviewing the
+   new matches, not assumed correct.
+3. The real fix scopes case-insensitivity to only the literal `"state of"`
+   text via an inline `(?i:...)` regex flag, plus a word boundary — verified
+   against both the new failing cases and everything that previously passed.
+
+**Hand-labeled gold set.** 100 LEDGAR docs, 19 entities (7 `GOVERNING_LAW`,
+12 `DEFINED_TERM`), built in two passes: 30 labeled by hand from scratch,
+70 more via a review workflow (rules generate candidates, human confirms or
+corrects) — faster than labeling from nothing while keeping a human as the
+final judge, not the rules grading their own output.
+
+**Results**, full 100-doc gold set, text-match evaluation
+(`scripts/evaluate_ner.py`):
+
+| label | precision | recall | F1 |
+|---|---|---|---|
+| GOVERNING_LAW | 1.000 | 1.000 | 1.000 |
+| DEFINED_TERM | 1.000 | 0.917 | 0.957 |
+| **overall** | **1.000** | **0.947** | **0.973** |
+
+**Getting here also caught a real recall gap in the DEFINED_TERM rule
+itself**, separate from the bug above: initial evaluation on the full gold
+set showed DEFINED_TERM recall of only 0.600 — 3 of 4 misses were bare
+`("X")` declarations with no `"the"/"this"` before the quote (e.g. `annual
+base salary ("Base Salary")`). Widening the rule to accept a bare `"("`
+directly before the quote (verified it didn't reintroduce two earlier
+known false-positive risks — quoted phrases referenced inline, not
+declared) brought recall to 0.900. Re-running the evaluation after that fix
+surfaced 2 new "false positives" (`Indemnitor`, `Indemnitee` in a
+previously-unreviewed doc) — investigation showed these were genuinely
+correct extractions the gold set had simply never covered, since that doc
+predated the wider rule. Added to gold rather than treated as a code
+problem, since the rule was right and the gold set was incomplete: final
+precision 1.000, recall 0.917.
+
+**Remaining known gap (documented, not fixed):** `The term "X" as used
+herein...` is not caught — `"the"` is separated from the quote by another
+word (`"term"`), a distinct construct from either pattern above. One
+occurrence in the 100-doc gold set (`Closing`, doc 006).
+
+**Structural finding on DEFINED_TERM base rate:** only ~2.7% of individual
+LEDGAR provisions contain a term declaration, even though contracts declare
+terms constantly. This is a property of the dataset, not the rule: LEDGAR
+samples individual clauses, and a definition usually lives once in a
+contract's recitals section, which downstream clauses (indemnification,
+termination, etc.) don't repeat.
+
+**Reproduce:**
+
+```
+python scripts/explore_ner.py --input data/processed/ledgar_60000.parquet --sample 15
+python scripts/explore_entities_scale.py --input data/processed/ledgar_60000.parquet --sample 1000
+python -m pytest tests/test_ner_extract.py -v
+python scripts/evaluate_ner.py --gold data/ner_labeling/labels_template.csv --doc-files data/ner_labeling/docs_to_label.txt data/ner_labeling/review_batch_docs.txt --save-results
+```
+Results in `results/ner.extraction/*.json`, same `ExperimentResult` format
+as every other experiment in this repo. Gold labels in
+`data/ner_labeling/labels_template.csv`.
 
 ## Limitations
 
@@ -440,3 +530,12 @@ every other experiment in this repo.
 - Legal NER labels are partly rule-derived and imperfect.
 - Temporal and jurisdictional coverage is limited by the public datasets used.
 - This is an **experimental research system, not legal advice.**
+- NER entity coverage is scoped to two types (governing-law jurisdiction,
+  defined terms) chosen from what the LEDGAR corpus actually contains, not
+  the courts/judges/citations originally envisioned for a case-law corpus —
+  see the NER extraction section for why.
+- The `DEFINED_TERM` rule still misses one construct (`The term "X" as used
+  herein...`) where "the" isn't immediately adjacent to the quote.
+- Retrieval (BM25/dense/hybrid) was scoped out of this project. Building it
+  again would substantially duplicate an existing RAG project rather than
+  demonstrate new ground.
